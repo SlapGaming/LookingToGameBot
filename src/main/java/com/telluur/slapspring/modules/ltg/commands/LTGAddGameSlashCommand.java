@@ -99,10 +99,9 @@ public class LTGAddGameSlashCommand extends ListenerAdapter implements ICommand 
             }
 
             Objects.requireNonNull(event.getGuild()).createRole() //Guild cannot be null as the command is only available in the guild
-                    .setName(String.format("%s | %s", abbreviation, fullname))
+                    .setName(String.format("LTG - %s - %s", abbreviation, fullname))
                     .setPermissions(Permission.EMPTY_PERMISSIONS)
                     .setMentionable(true)
-                    .setColor(new Color(17, 128, 106))
                     .queue(
                             role -> {
                                 LTGGame ltgGame = new LTGGame(role.getIdLong(), abbreviation, fullname, null);
@@ -116,7 +115,7 @@ public class LTGAddGameSlashCommand extends ListenerAdapter implements ICommand 
                                 event.getHook().sendMessageEmbeds(me).queue();
                             },
                             fail -> {
-                                MessageEmbed me = LTGUtil.failureEmbed(String.format("Failed to create LTG role, `%s | %s`", abbreviation, fullname));
+                                MessageEmbed me = LTGUtil.failureEmbed(String.format("Failed to create LTG role, `LTG - %s - %s`", abbreviation, fullname));
                                 event.getHook().sendMessageEmbeds(me).queue();
                             }
                     );
