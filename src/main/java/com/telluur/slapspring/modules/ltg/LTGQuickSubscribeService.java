@@ -1,5 +1,6 @@
 package com.telluur.slapspring.modules.ltg;
 
+import com.telluur.slapspring.abstractions.discord.paginator.PaginatorException;
 import com.telluur.slapspring.core.discord.BotSession;
 import com.telluur.slapspring.modules.ltg.model.LTGGame;
 import com.telluur.slapspring.modules.ltg.model.LTGGameRepository;
@@ -19,7 +20,9 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
+import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
@@ -39,22 +42,36 @@ public class LTGQuickSubscribeService extends ListenerAdapter {
     private static final String QUICK_SUBSCRIBE_PREFIX = LTGUtil.LTG_INTERACTABLE_PREFIX + "QS:";
     private static final String QUICK_SUBSCRIBE_MENU_ID = LTGUtil.LTG_INTERACTABLE_PREFIX + "QS:MENU";
 
+    private static final String QUICK_SUBSCRIBE_LIST_GAMES = LTGUtil.LTG_INTERACTABLE_PREFIX + "LIST_GAMES";
+    private static final Button QUICK_SUBSCRIBE_LIST_GAMES_BUTTON = Button.secondary(
+            QUICK_SUBSCRIBE_LIST_GAMES,
+            "Show all games"
+    );
+
     private static final String QUICK_SUBSCRIBE_WHATS_THIS = LTGUtil.LTG_INTERACTABLE_PREFIX + "WHATS_THIS";
-    private static final Button QUICK_SUBSCRIBE_WHATS_THIS_BUTTON = Button.success(
+    private static final Button QUICK_SUBSCRIBE_WHATS_THIS_BUTTON = Button.secondary(
             QUICK_SUBSCRIBE_WHATS_THIS,
             "What's this?"
     );
-
     private static final String SUBSCRIBE_ACTION_TEXT = "Subscribe to %s";
 
-    @Autowired
-    private BotSession botSession;
+    private final BotSession botSession;
 
-    @Autowired
-    private LTGGameRepository repository;
+    private final LTGGameRepository repository;
 
-    @Autowired
-    private LTGRoleService ltgRoleService;
+    private final LTGRoleService ltgRoleService;
+
+    private final LTGListGamePaginatorService listGamePaginatorService;
+
+    public LTGQuickSubscribeService(@Autowired BotSession botSession,
+                                    @Autowired LTGGameRepository repository,
+                                    @Autowired LTGRoleService ltgRoleService,
+                                    @Autowired @Lazy LTGListGamePaginatorService listGamePaginatorService) {
+        this.botSession = botSession;
+        this.repository = repository;
+        this.ltgRoleService = ltgRoleService;
+        this.listGamePaginatorService = listGamePaginatorService;
+    }
 
 
     public void sendQuickSubscribe(Collection<Role> roles) {
@@ -83,8 +100,12 @@ public class LTGQuickSubscribeService extends ListenerAdapter {
             List<ItemComponent> components = ltgQuickSubActionRow.getComponents();
             if (components.size() == 1 && components.get(0).getType().equals(Component.Type.STRING_SELECT)) {
                 mcBuilder.addContent("Select the Looking-To-Game roles you wish to join from the dropdown.")
-                        .setComponents(ltgQuickSubActionRow, ActionRow.of(QUICK_SUBSCRIBE_WHATS_THIS_BUTTON));
+                        .setComponents(
+                                ltgQuickSubActionRow,
+                                ActionRow.of(QUICK_SUBSCRIBE_LIST_GAMES_BUTTON, QUICK_SUBSCRIBE_WHATS_THIS_BUTTON)
+                        );
             } else {
+                components.add(QUICK_SUBSCRIBE_LIST_GAMES_BUTTON);
                 components.add(QUICK_SUBSCRIBE_WHATS_THIS_BUTTON);
                 mcBuilder.addContent("Use the buttons below to join Looking-To-Game roles.")
                         .setComponents(ltgQuickSubActionRow);
@@ -157,36 +178,52 @@ public class LTGQuickSubscribeService extends ListenerAdapter {
     @Override
     public void onButtonInteraction(@NonNull ButtonInteractionEvent event) {
         String buttonId = event.getButton().getId();
-        if (buttonId == null){
+        if (buttonId == null) {
             return;
         }
 
-        if (buttonId.equals(QUICK_SUBSCRIBE_WHATS_THIS)){
+        if (buttonId.equals(QUICK_SUBSCRIBE_WHATS_THIS)) {
             event.deferReply(true).queue();
 
             MessageEmbed me = new EmbedBuilder()
                     .setColor(LTGUtil.LTG_SUCCESS_COLOR)
                     .setTitle("Hi, I am the looking-to-game bot! :wave:")
                     .setDescription(String.format("""
-                            Subscribe to the games you love, and find new people to play alongside!
+                                    Subscribe to the games you love, and find new people to play alongside!
 
-                            Once you've subscribed to a game using this bot, you will automatically become part of the game's role on this server - allowing you to receive notifications when that game is being played.
+                                    Once you've subscribed to a game using this bot, you will automatically become part of the game's role on this server - allowing you to receive notifications when that game is being played.
 
-                            **Bot Commands**:
-                            • `/listgames` - Shows an alphabetical list of all LTG games.
-                            • `/gameinfo <@role>` - Displays more information about a LTG role, including other subscribers with this role.
-                            • `/subscribe <@role>` - Subscribes to a game group.
-                            • `/unsubscribe <@role>` - Unsubscribe from a game group.
+                                    **Bot Commands**:
+                                    • `/listgames` - Shows an alphabetical list of all LTG games.
+                                    • `/gameinfo <@role>` - Displays more information about a LTG role, including other subscribers with this role.
+                                    • `/subscribe <@role>` - Subscribes to a game group.
+                                    • `/unsubscribe <@role>` - Unsubscribe from a game group.
 
-                            Once subscribed, you should be able to mention the `@<role>`, notifying anyone with this game role that you're looking to play!
-                            -- In %s only, the bot will reply to your message with a quick subscribe button or dropdown.
+                                    Once subscribed, you should be able to mention the `@<role>`, notifying anyone with this game role that you're looking to play!
+                                    -- In %s only, the bot will reply to your message with a quick subscribe button or dropdown.
 
-                            Can't find the game you're looking for? Ask a member of staff to use the `/addgame` function to add a new game to the list!
-                            """,
+                                    Can't find the game you're looking for? Ask a member of staff to use the `/addgame` function to add a new game to the list!
+                                    """,
                             botSession.getLTGTX().getAsMention()))
                     .build();
 
             event.getHook().sendMessageEmbeds(me).queue();
+
+        } else if (buttonId.equals(QUICK_SUBSCRIBE_LIST_GAMES)) {
+            event.deferReply(true).queue();
+            int startIndex = 0;
+            MessageCreateData mcd;
+            try {
+                mcd = listGamePaginatorService.paginate(null, startIndex).toMessageCreateData();
+            } catch (PaginatorException e) {
+                MessageEmbed me = new EmbedBuilder()
+                        .setColor(LTGUtil.LTG_FAILURE_COLOR)
+                        .setTitle("Looking-To-Game Roles")
+                        .setDescription("No Looking-To-Game roles were found.")
+                        .build();
+                mcd = new MessageCreateBuilder().setEmbeds(me).build();
+            }
+            event.getHook().sendMessage(mcd).queue();
 
         } else if (buttonId.startsWith(QUICK_SUBSCRIBE_PREFIX)) {
             event.deferReply(true).queue();
