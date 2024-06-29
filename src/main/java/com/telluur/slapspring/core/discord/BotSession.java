@@ -36,9 +36,7 @@ public class BotSession {
             Objects::requireNonNull will throw a NullPointerException when the argument is null.
              */
             getBoundGuild();
-            getGeneralTX();
             getLTGTX();
-            getNSATX();
         } catch (NullPointerException e) {
             //SpringApplication.exit(appContext, () -> 0);
         }
@@ -54,17 +52,11 @@ public class BotSession {
         return Objects.requireNonNull(jda.getGuildById(botProperties.guild()));
     }
 
-    public TextChannel getGeneralTX() {
-        return Objects.requireNonNull(jda.getTextChannelById(botProperties.tx_general()));
-    }
 
     public TextChannel getLTGTX() {
         return Objects.requireNonNull(jda.getTextChannelById(botProperties.tx_ltg()));
     }
 
-    public TextChannel getNSATX() {
-        return Objects.requireNonNull(jda.getTextChannelById(botProperties.tx_nsa()));
-    }
 
 }
 

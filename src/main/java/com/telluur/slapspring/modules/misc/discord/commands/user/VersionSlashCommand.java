@@ -1,6 +1,6 @@
 package com.telluur.slapspring.modules.misc.discord.commands.user;
 
-import com.telluur.slapspring.SlapSpringApplication;
+import com.telluur.slapspring.LookingToGameSpringApplication;
 import com.telluur.slapspring.abstractions.discord.commands.ICommand;
 import lombok.NonNull;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -14,7 +14,7 @@ import java.util.Optional;
 public class VersionSlashCommand implements ICommand {
     public static final String COMMAND_NAME = "version";
     public static final String COMMAND_DESCRIPTION = "Displays the bot's version.";
-    public static final String VERSION = Optional.ofNullable(SlapSpringApplication.class.getPackage().getImplementationVersion()).orElse("DEV");
+    public static final String VERSION = Optional.ofNullable(LookingToGameSpringApplication.class.getPackage().getImplementationVersion()).orElse("DEV");
     private static final CommandData COMMAND_DATA = Commands.slash(COMMAND_NAME, COMMAND_DESCRIPTION)
             .setGuildOnly(true);
 
@@ -26,6 +26,6 @@ public class VersionSlashCommand implements ICommand {
 
     @Override
     public void handle(@NonNull SlashCommandInteractionEvent event) {
-        event.reply(String.format("SlapBot version: `%s`", VERSION)).setEphemeral(true).queue();
+        event.reply(String.format("LookingToGameBot version: `%s`", VERSION)).setEphemeral(true).queue();
     }
 }

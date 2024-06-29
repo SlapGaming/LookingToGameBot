@@ -1,8 +1,7 @@
-# SlapSpring - SlapGaming Discord Bot
+# LookingToGameBot
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Discord](https://discordapp.com/api/guilds/276858200853184522/widget.png)](https://discord.gg/wZes6v4)
 
-Second iteration discord bot tailored to the slapgaming community.
+Derivative of upstream SlapBot with only the LTG functionality
 
 ## Built using
 See [build.gradle](./build.gradle) for complete list

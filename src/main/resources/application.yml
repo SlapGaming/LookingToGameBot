@@ -24,11 +24,6 @@ jda:
   guild: ${DISCORD_GUILD}
   system-users:
     - ${DISCORD_USER_RICK}
-    - ${DISCORD_USER_LEON}
   role-admin: ${DISCORD_ROLE_ADMIN}
-  role-mod: ${DISCORD_ROLE_MOD}
-  role-community: ${DISCORD_ROLE_COMMUNITY}
-  tx-general: ${DISCORD_TX_GENERAL}
   tx-ltg: ${DISCORD_TX_LTG}
-  tx-nsa: ${DISCORD_TX_NSA}
   web-base-url: ${SPRING_ENDPOINT_BASE}

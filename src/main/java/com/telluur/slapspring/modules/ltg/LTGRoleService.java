@@ -90,15 +90,10 @@ public class LTGRoleService {
                                 .filter(Objects::nonNull) //Filter out the error'd roles
                                 .toList();
 
-                        if (joinedRoles.size() <= 0) {
+                        if (joinedRoles.isEmpty()) {
                             failure.accept(new IllegalAccessError("Discord API error, most likely bot permissions"));
                         } else {
                             success.accept(joinedRoles);
-                            //Add community role
-                            Role communityRole = guild.getRoleById(botSession.getBotProperties().role_community());
-                            if (communityRole != null && !member.getRoles().contains(communityRole)) {
-                                guild.addRoleToMember(member, communityRole).queue();
-                            }
                         }
                     });
         }
@@ -114,7 +109,7 @@ public class LTGRoleService {
                 .filter(role -> member.getRoles().contains(role))
                 .filter(role -> repository.existsById(role.getIdLong()))
                 .toList();
-        if (validRoles.size() <= 0) { //1 since community role was added.
+        if (validRoles.isEmpty()) { //1 since community role was added.
             failure.accept(new IllegalArgumentException("The roles provided are either non-LTG roles, or you are already a unsubscribed."));
         } else {
             Guild guild = botSession.getBoundGuild();
@@ -143,7 +138,7 @@ public class LTGRoleService {
                                 .filter(Objects::nonNull) //Filter out the error'd roles
                                 .toList();
 
-                        if (leftRoles.size() <= 0) {
+                        if (leftRoles.isEmpty()) {
                             failure.accept(new IllegalAccessError("Discord API error, most likely bot permissions"));
                         } else {
                             success.accept(leftRoles);

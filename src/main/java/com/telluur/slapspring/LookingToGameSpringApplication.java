@@ -13,22 +13,28 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.annotation.Bean;
 
 import javax.security.auth.login.LoginException;
+import java.util.Collection;
 import java.util.EnumSet;
 
 @SpringBootApplication
 @ConfigurationPropertiesScan
 @Slf4j
-public class SlapSpringApplication {
+public class LookingToGameSpringApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(SlapSpringApplication.class, args);
+        SpringApplication.run(LookingToGameSpringApplication.class, args);
     }
 
     @Bean
     public JDA initJDA(@Autowired BotProperties botProperties) throws LoginException, InterruptedException {
         log.info("Bot config: {}", botProperties.toString());
+        Collection<GatewayIntent> intents = EnumSet.of(
+                GatewayIntent.GUILD_MESSAGES,
+                GatewayIntent.MESSAGE_CONTENT,
+                GatewayIntent.GUILD_MEMBERS,
+                GatewayIntent.GUILD_VOICE_STATES);
         return JDABuilder
-                .create(botProperties.token(), EnumSet.allOf(GatewayIntent.class))
+                .create(botProperties.token(), intents)
                 .setMemberCachePolicy(MemberCachePolicy.ALL)
                 .build()
                 .awaitReady();
@@ -42,3 +48,4 @@ public class SlapSpringApplication {
 
 
 }
+
